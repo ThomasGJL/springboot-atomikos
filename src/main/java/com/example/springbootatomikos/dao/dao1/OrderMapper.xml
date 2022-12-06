@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.springbootatomikos.dao.dao1.OrderMapper">
+
+    <select id="getOrderById" resultType="com.example.springbootatomikos.entity.Order">
+        select * from `order` where id=#{id}
+    </select>
+
+    <insert id="addOrder" parameterType="com.example.springbootatomikos.entity.Order">
+        insert into `order` (user_id, commodity_code, count, money) values (#{user_id}, #{commodity_code}, #{count}, #{money})
+    </insert>
+
+</mapper>
