@@ -1,6 +1,9 @@
 package com.example.springbootatomikos.config;
 
+import com.alibaba.druid.filter.Filter;
+import com.alibaba.druid.filter.logging.Slf4jLogFilter;
 import com.alibaba.druid.filter.stat.StatFilter;
+import com.alibaba.druid.pool.DruidDataSource;
 import com.alibaba.druid.support.http.StatViewServlet;
 import com.alibaba.druid.support.http.WebStatFilter;
 import com.alibaba.druid.wall.WallConfig;
@@ -8,7 +11,6 @@ import com.alibaba.druid.wall.WallFilter;
 import com.atomikos.icatch.jta.UserTransactionImp;
 import com.atomikos.icatch.jta.UserTransactionManager;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.jta.atomikos.AtomikosDataSourceBean;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -17,8 +19,9 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
 import org.springframework.transaction.jta.JtaTransactionManager;
 
-import javax.sql.DataSource;
 import javax.transaction.UserTransaction;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -30,31 +33,68 @@ public class DruidConfig {
     @Bean(name = "datasource1")
     @Primary
     @Autowired
-    public DataSource datasource1(Environment env) {
-        AtomikosDataSourceBean ds = new AtomikosDataSourceBean();
+    public DruidDataSource datasource1(Environment env) {
+        DruidDataSource druidDataSource = new DruidDataSource();
+        druidDataSource.setProxyFilters(this.filterList());
+
         Properties prop = build(env, "spring.datasource.druid.datasource1.");
-        ds.setXaDataSourceClassName("com.alibaba.druid.pool.xa.DruidXADataSource");
-        ds.setUniqueResourceName("datasource1");
-        ds.setPoolSize(5);
-        ds.setXaProperties(prop);
-        return ds;
+        druidDataSource.setDriverClassName(prop.getProperty("driverClassName"));
 
+        druidDataSource.setUrl(prop.getProperty("url"));
+        druidDataSource.setUsername(prop.getProperty("username"));
+        druidDataSource.setPassword(prop.getProperty("password"));
+        druidDataSource.setInitialSize(Integer.parseInt(prop.getProperty("initialSize")));
+        druidDataSource.setMinIdle(Integer.parseInt(prop.getProperty("minIdle")));
+        druidDataSource.setMaxActive(Integer.parseInt(prop.getProperty("maxActive")));
+        druidDataSource.setMaxWait(Long.parseLong(prop.getProperty("maxWait")));
+        druidDataSource.setTimeBetweenEvictionRunsMillis(Long.parseLong(prop.getProperty("timeBetweenEvictionRunsMillis")));
+        druidDataSource.setMinEvictableIdleTimeMillis(Long.parseLong(prop.getProperty("minEvictableIdleTimeMillis")));
+        druidDataSource.setValidationQuery(prop.getProperty("validationQuery"));
+        druidDataSource.setTestWhileIdle(Boolean.parseBoolean(prop.getProperty("testWhileIdle")));
+        druidDataSource.setTestOnBorrow(Boolean.parseBoolean(prop.getProperty("testOnBorrow")));
+        druidDataSource.setTestOnReturn(Boolean.parseBoolean(prop.getProperty("testOnReturn")));
+
+        return druidDataSource;
     }
 
-    @Autowired
     @Bean(name = "datasource2")
-    public AtomikosDataSourceBean datasource2(Environment env) {
+    @Autowired
+    public DruidDataSource datasource2(Environment env) {
+        DruidDataSource druidDataSource = new DruidDataSource();
+        druidDataSource.setProxyFilters(this.filterList());
 
-        AtomikosDataSourceBean ds = new AtomikosDataSourceBean();
         Properties prop = build(env, "spring.datasource.druid.datasource2.");
-        ds.setXaDataSourceClassName("com.alibaba.druid.pool.xa.DruidXADataSource");
-        ds.setUniqueResourceName("datasource2");
-        ds.setPoolSize(5);
-        ds.setXaProperties(prop);
+        druidDataSource.setDriverClassName(prop.getProperty("driverClassName"));
+        druidDataSource.setUrl(prop.getProperty("url"));
+        druidDataSource.setUsername(prop.getProperty("username"));
+        druidDataSource.setPassword(prop.getProperty("password"));
+        druidDataSource.setInitialSize(Integer.parseInt(prop.getProperty("initialSize")));
+        druidDataSource.setMinIdle(Integer.parseInt(prop.getProperty("minIdle")));
+        druidDataSource.setMaxActive(Integer.parseInt(prop.getProperty("maxActive")));
+        druidDataSource.setMaxWait(Long.parseLong(prop.getProperty("maxWait")));
+        druidDataSource.setTimeBetweenEvictionRunsMillis(Long.parseLong(prop.getProperty("timeBetweenEvictionRunsMillis")));
+        druidDataSource.setMinEvictableIdleTimeMillis(Long.parseLong(prop.getProperty("minEvictableIdleTimeMillis")));
+        druidDataSource.setValidationQuery(prop.getProperty("validationQuery"));
+        druidDataSource.setTestWhileIdle(Boolean.parseBoolean(prop.getProperty("testWhileIdle")));
+        druidDataSource.setTestOnBorrow(Boolean.parseBoolean(prop.getProperty("testOnBorrow")));
+        druidDataSource.setTestOnReturn(Boolean.parseBoolean(prop.getProperty("testOnReturn")));
 
-        return ds;
+        return druidDataSource;
     }
 
+    private List<Filter> filterList() {
+
+        Slf4jLogFilter logFilter = new Slf4jLogFilter();
+        logFilter.setConnectionLogEnabled(Boolean.FALSE);
+        logFilter.setStatementLogEnabled(Boolean.TRUE);
+        logFilter.setStatementExecutableSqlLogEnable(Boolean.TRUE);
+        logFilter.setResultSetLogEnabled(Boolean.FALSE);
+
+        List<Filter> filters = new ArrayList<>(1);
+        filters.add(logFilter);
+
+        return filters;
+    }
 
     /**
      * 注入事物管理器
@@ -76,25 +116,23 @@ public class DruidConfig {
         prop.put("username", env.getProperty(prefix + "username"));
         prop.put("password", env.getProperty(prefix + "password"));
         prop.put("driverClassName", env.getProperty(prefix + "driverClassName", ""));
-        prop.put("initialSize", env.getProperty(prefix + "initialSize", Integer.class));
-        prop.put("maxActive", env.getProperty(prefix + "maxActive", Integer.class));
-        prop.put("minIdle", env.getProperty(prefix + "minIdle", Integer.class));
-        prop.put("maxWait", env.getProperty(prefix + "maxWait", Integer.class));
-        prop.put("poolPreparedStatements", env.getProperty(prefix + "poolPreparedStatements", Boolean.class));
-
+        prop.put("initialSize", env.getProperty(prefix + "initialSize"));
+        prop.put("maxActive", env.getProperty(prefix + "maxActive"));
+        prop.put("minIdle", env.getProperty(prefix + "minIdle"));
+        prop.put("maxWait", env.getProperty(prefix + "maxWait"));
+        prop.put("poolPreparedStatements", env.getProperty(prefix + "poolPreparedStatements"));
         prop.put("maxPoolPreparedStatementPerConnectionSize",
-                env.getProperty(prefix + "maxPoolPreparedStatementPerConnectionSize", Integer.class));
-
+                env.getProperty(prefix + "maxPoolPreparedStatementPerConnectionSize"));
         prop.put("maxPoolPreparedStatementPerConnectionSize",
-                env.getProperty(prefix + "maxPoolPreparedStatementPerConnectionSize", Integer.class));
+                env.getProperty(prefix + "maxPoolPreparedStatementPerConnectionSize"));
         prop.put("validationQuery", env.getProperty(prefix + "validationQuery"));
-        prop.put("validationQueryTimeout", env.getProperty(prefix + "validationQueryTimeout", Integer.class));
-        prop.put("testOnBorrow", env.getProperty(prefix + "testOnBorrow", Boolean.class));
-        prop.put("testOnReturn", env.getProperty(prefix + "testOnReturn", Boolean.class));
-        prop.put("testWhileIdle", env.getProperty(prefix + "testWhileIdle", Boolean.class));
+        prop.put("validationQueryTimeout", env.getProperty(prefix + "validationQueryTimeout"));
+        prop.put("testOnBorrow", env.getProperty(prefix + "testOnBorrow"));
+        prop.put("testOnReturn", env.getProperty(prefix + "testOnReturn"));
+        prop.put("testWhileIdle", env.getProperty(prefix + "testWhileIdle"));
         prop.put("timeBetweenEvictionRunsMillis",
-                env.getProperty(prefix + "timeBetweenEvictionRunsMillis", Integer.class));
-        prop.put("minEvictableIdleTimeMillis", env.getProperty(prefix + "minEvictableIdleTimeMillis", Integer.class));
+                env.getProperty(prefix + "timeBetweenEvictionRunsMillis"));
+        prop.put("minEvictableIdleTimeMillis", env.getProperty(prefix + "minEvictableIdleTimeMillis"));
         prop.put("filters", env.getProperty(prefix + "filters"));
 
         return prop;
