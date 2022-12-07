@@ -7,7 +7,7 @@ spring:
     druid:
       datasource1:
         name: datasource1
-        driver-class-name: com.mysql.cj.jdbc.Driver
+        driverClassName: com.mysql.cj.jdbc.Driver
         url:
         username:
         password:
@@ -30,15 +30,14 @@ spring:
         # 打开PSCache，并且指定每个连接上PSCache的大小
         poolPreparedStatements: true
         maxPoolPreparedStatementPerConnectionSize: 20
-        filters: stat,wall
+        filters: stat,wall,stat,slf4j,default
         # 通过connectProperties属性来打开mergeSql功能；慢SQL记录
         connectionProperties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=5000
         # 合并多个DruidDataSource的监控数据
         useGlobalDataSourceStat: true
-
       datasource2:
         name: datasource2
-        driver-class-name: com.mysql.cj.jdbc.Driver
+        driverClassName: com.mysql.cj.jdbc.Driver
         url:
         username:
         password:
@@ -61,11 +60,19 @@ spring:
         # 打开PSCache，并且指定每个连接上PSCache的大小
         poolPreparedStatements: true
         maxPoolPreparedStatementPerConnectionSize: 20
-        filters: stat,wall
+        filters: stat,wall,stat,slf4j,default
         # 通过connectProperties属性来打开mergeSql功能；慢SQL记录
         connectionProperties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=5000
         # 合并多个DruidDataSource的监控数据
         useGlobalDataSourceStat: true
+      filter:
+        slf4j:
+          enabled: true
+          statement-create-after-log-enabled: false
+          statement-log-enabled: false
+          statement-executable-sql-log-enable: true
+          statement-log-error-enabled: true
+          result-set-log-enabled: false
 
   #jta相关参数配置
   jta:
